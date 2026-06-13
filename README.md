@@ -28,8 +28,8 @@
 ### Быстрый старт
 
 ```bash
-git clone https://github.com/ALEKSEYR554/test_task
-cd test_task
+git clone https://github.com/ALEKSEYR554/rails-tasks-calendar
+cd rails-tasks-calendar
 docker-compose up --build
 ```
 
@@ -76,8 +76,8 @@ docker-compose logs -f web
 
 1. Клонировать репозиторий:
 ```bash
-git clone https://github.com/ALEKSEYR554/test_task
-cd test_task
+git clone https://github.com/ALEKSEYR554/rails-tasks-calendar
+cd rails-tasks-calendar
 ```
 
 2. Установить зависимости:
