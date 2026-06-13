@@ -28,7 +28,7 @@
 ### Быстрый старт
 
 ```bash
-git clone <url-репозитория>
+git clone https://github.com/ALEKSEYR554/test_task
 cd test_task
 docker-compose up --build
 ```
@@ -76,7 +76,7 @@ docker-compose logs -f web
 
 1. Клонировать репозиторий:
 ```bash
-git clone <url-репозитория>
+git clone https://github.com/ALEKSEYR554/test_task
 cd test_task
 ```
 
