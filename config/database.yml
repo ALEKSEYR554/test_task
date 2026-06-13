@@ -1,0 +1,37 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+
+development:
+  <<: *default
+  database: test_task_development
+  username: postgres
+  password: <%= ENV.fetch("POSTGRES_PASSWORD", "ALEKSEYR554") %>
+  host: <%= ENV.fetch("POSTGRES_HOST", "localhost") %>
+  port: <%= ENV.fetch("POSTGRES_PORT", 5432) %>
+
+test:
+  <<: *default
+  database: test_task_test
+  username: postgres
+  password: <%= ENV.fetch("POSTGRES_PASSWORD", "ALEKSEYR554") %>
+  host: <%= ENV.fetch("POSTGRES_HOST", "localhost") %>
+  port: <%= ENV.fetch("POSTGRES_PORT", 5432) %>
+
+production:
+  primary:
+    <<: *default
+    url: <%= ENV["DATABASE_URL"] %>
+  cache:
+    <<: *default
+    url: <%= ENV["CACHE_DATABASE_URL"] || ENV["DATABASE_URL"]&.sub("/test_task_production", "/test_task_production_cache") %>
+    migrations_paths: db/cache_migrate
+  queue:
+    <<: *default
+    url: <%= ENV["QUEUE_DATABASE_URL"] || ENV["DATABASE_URL"]&.sub("/test_task_production", "/test_task_production_queue") %>
+    migrations_paths: db/queue_migrate
+  cable:
+    <<: *default
+    url: <%= ENV["CABLE_DATABASE_URL"] || ENV["DATABASE_URL"]&.sub("/test_task_production", "/test_task_production_cable") %>
+    migrations_paths: db/cable_migrate

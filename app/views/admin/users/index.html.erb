@@ -1,0 +1,28 @@
+<h1>Пользователи</h1>
+
+<%= link_to 'Новый пользователь', new_admin_user_path, class: 'btn' %>
+
+<table>
+  <thead>
+    <tr>
+      <th>Имя</th>
+      <th>Электронная почта</th>
+      <th>Роль</th>
+      <th>Действия</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @users.each do |user| %>
+      <tr>
+        <td><%= user.name %></td>
+        <td><%= user.email %></td>
+        <td><%= user.role %></td>
+        <td>
+          <%= link_to 'Просмотр', admin_user_path(user) %> |
+          <%= link_to 'Редактировать', edit_admin_user_path(user) %> |
+          <%= link_to 'Удалить', admin_user_path(user), data: { turbo_method: :delete, turbo_confirm: 'Вы уверены?' } %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

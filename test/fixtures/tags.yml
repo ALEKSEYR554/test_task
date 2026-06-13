@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  user: one
+  name: Tag One
+  color: '#FF0000'
+  is_required: false
+
+two:
+  user: two
+  name: Tag Two
+  color: '#00FF00'
+  is_required: false

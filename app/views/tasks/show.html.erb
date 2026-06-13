@@ -1,0 +1,57 @@
+<h1>Задача</h1>
+
+<p>
+  <strong>Название:</strong>
+  <%= @task.title %>
+</p>
+
+<p>
+  <strong>Описание:</strong>
+  <%= @task.description %>
+</p>
+
+<p>
+  <strong>Дата выполнения:</strong>
+  <%= @task.due_date.strftime('%d.%m.%Y %H:%M') %>
+</p>
+
+<p>
+  <strong>Статус:</strong>
+  <%= @task.status_label %>
+</p>
+
+<p>
+  <strong>Тип:</strong>
+  <%= @task.task_type_label %>
+</p>
+
+<% if @task.periodic? %>
+  <p>
+    <strong>Периодичность:</strong>
+    <%= @task.periodicity_type_label %>
+    <% if @task.periodicity_config.present? %>
+      <% config = @task.periodicity_config %>
+      <% if config['interval'].present? %>
+        — Интервал: <%= config['interval'] %> дн.
+      <% end %>
+      <% if config['even_odd'].present? %>
+        — <%= config['even_odd'] == 'even' ? 'Чётные дни' : 'Нечётные дни' %>
+      <% end %>
+      <% if config['dates'].present? %>
+        — Даты: <%= config['dates'].join(', ') %>
+      <% end %>
+    <% end %>
+  </p>
+<% end %>
+
+<p>
+  <strong>Теги:</strong>
+  <% @task.tags.each do |tag| %>
+    <span style="background-color: <%= tag.color %>; color: white; padding: 2px 6px; border-radius: 3px; margin-right: 4px;">
+      <%= tag.name %>
+    </span>
+  <% end %>
+</p>
+
+<%= link_to 'Редактировать', edit_task_path(@task) %> |
+<%= link_to 'Назад', request.referer || calendar_path %>

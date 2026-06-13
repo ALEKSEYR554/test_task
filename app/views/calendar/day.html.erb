@@ -1,0 +1,72 @@
+<h1>Задачи на <%= @date.strftime('%d.%m.%Y') %></h1>
+
+<%= link_to '← Назад к календарю', calendar_path(date: @date), class: 'btn' %>
+
+<div style="margin-top: 20px;">
+  <% @day_tasks.each do |item| %>
+    <% task = item[:task] %>
+    <% is_periodic = task.periodic? %>
+    <% is_exception = item[:is_exception] %>
+    <% exception_status = item[:exception_status] %>
+    <% occurrence_date = item[:date] || @date %>
+
+    <%# Skip cancelled occurrences %>
+    <% next if exception_status == 'cancelled' %>
+
+    <div style="border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 4px;
+      <%= 'border-color: #ff9800; background: #fff8e1;' if is_periodic && !is_exception %>">
+      <div style="display: flex; justify-content: space-between;">
+        <div>
+          <% if is_periodic && !is_exception %>
+            <h3 style="margin: 0;"><%= task.title %> <span style="font-size: 12px; color: #ff9800;">(периодическая)</span></h3>
+          <% elsif is_exception %>
+            <h3 style="margin: 0;"><%= task.title %> <span style="font-size: 12px; color: #4CAF50;">(изменена)</span></h3>
+          <% else %>
+            <h3 style="margin: 0;"><%= link_to task.title, task_path(task) %></h3>
+          <% end %>
+          <p style="margin: 5px 0; color: #666;"><%= task.description %></p>
+        </div>
+        <div>
+          <% status_val = item[:status] || task.status %>
+          <% status_label = status_val.is_a?(String) ? status_val : task.status_label %>
+          <span style="background: #e0e0e0; padding: 2px 8px; border-radius: 3px;">
+            <%= status_label %>
+          </span>
+        </div>
+      </div>
+
+      <div style="margin-top: 10px;">
+        <strong>Теги:</strong>
+        <% task.tags.each do |tag| %>
+          <span style="background-color: <%= tag.color %>; color: white; padding: 2px 6px; border-radius: 3px; margin-right: 4px;">
+            <%= tag.name %>
+          </span>
+        <% end %>
+      </div>
+
+      <div style="margin-top: 10px;">
+        <% if is_periodic && !is_exception %>
+          <%= link_to 'Редактировать это вхождение',
+            edit_periodic_occurrence_path(task_id: task.id, date: occurrence_date),
+            class: 'btn' %>
+          <%= button_to 'Отменить на этот день',
+            periodic_occurrence_cancel_path(task_id: task.id, date: occurrence_date),
+            method: :post,
+            class: 'btn',
+            style: 'background: #dc3545;',
+            data: { turbo_confirm: 'Отменить задачу на этот день?' } %>
+        <% elsif is_exception %>
+          <% if task.one_time? && task.persisted? %>
+            <%= link_to 'Редактировать', edit_task_path(task), class: 'btn' %>
+          <% end %>
+        <% else %>
+          <%= link_to 'Редактировать', edit_task_path(task), class: 'btn' %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <% if @day_tasks.reject { |item| item[:exception_status] == 'cancelled' }.empty? %>
+    <p>Нет задач на этот день.</p>
+  <% end %>
+</div>

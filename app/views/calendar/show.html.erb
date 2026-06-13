@@ -1,0 +1,104 @@
+<h1>Календарь</h1>
+
+<div style="margin-bottom: 20px;">
+  <%= link_to '← Предыдущий', calendar_path(view: @view, date: @start_date - 1.send(@view == 'week' ? 'week' : 'month')), class: 'btn' %>
+  <%= link_to 'Неделя', calendar_path(view: 'week', date: @date), class: 'btn' %>
+  <%= link_to 'Месяц', calendar_path(view: 'month', date: @date), class: 'btn' %>
+  <%= link_to 'Следующий →', calendar_path(view: @view, date: @start_date + 1.send(@view == 'week' ? 'week' : 'month')), class: 'btn' %>
+  <span style="margin-left: 20px; font-weight: bold;">
+    <% month_names = ['', 'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'] %>
+    <%= month_names[@date.month] %> <%= @date.year %>
+  </span>
+</div>
+
+<style>
+  .tag-dot { position: relative; cursor: default; }
+  .tag-dot:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    white-space: nowrap;
+    z-index: 200;
+    pointer-events: none;
+  }
+</style>
+
+<% if @view == 'week' %>
+  <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #ddd; border: 1px solid #ddd;">
+    <% day_names = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'] %>
+    <% (@start_date..@end_date).each_with_index do |date, index| %>
+      <div style="background: white; min-height: 100px;">
+        <div style="background: #4CAF50; color: white; padding: 8px; text-align: center;">
+          <%= day_names[index] %>
+        </div>
+        <div style="padding: 8px;">
+          <%= link_to date.day, calendar_day_path(date: date) %>
+          <% if @calendar_data[date] %>
+            <% @calendar_data[date].first(3).each do |item| %>
+              <% task = item.is_a?(Hash) ? item[:task] : item %>
+              <div style="font-size: 12px; margin-top: 4px; padding: 2px; background: #f0f0f0; border-radius: 2px;">
+                <% task.tags.each do |tag| %>
+                  <span class="tag-dot" style="display: inline-block; width: 8px; height: 8px; background: <%= tag.color %>; border-radius: 50%;" title="<%= tag.name %>"></span>
+                <% end %>
+                <%= link_to task.title.truncate(15), calendar_day_path(date: date) %>
+              </div>
+            <% end %>
+            <% if @calendar_data[date].size > 3 %>
+              <div style="font-size: 11px; color: #666;">+<%= @calendar_data[date].size - 3 %> ещё</div>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #ddd; border: 1px solid #ddd;">
+    <% %w[Пн Вт Ср Чт Пт Сб Вс].each do |day_name| %>
+      <div style="background: #4CAF50; color: white; padding: 8px; text-align: center;">
+        <%= day_name %>
+      </div>
+    <% end %>
+
+    <%# Empty cells before first day of month (week starts on Monday) %>
+    <% empty_cells = (@start_date.wday - 1) % 7 %>
+    <% empty_cells.times do %>
+      <div style="background: white; min-height: 80px;"></div>
+    <% end %>
+
+    <%# Days of the month %>
+    <% (@start_date..@end_date).each do |date| %>
+      <div style="background: white; min-height: 80px; padding: 4px;">
+        <div style="text-align: right; font-weight: bold;">
+          <%= link_to date.day, calendar_day_path(date: date) %>
+        </div>
+        <% if @calendar_data[date] %>
+          <% @calendar_data[date].first(2).each do |item| %>
+            <% task = item.is_a?(Hash) ? item[:task] : item %>
+            <div style="font-size: 11px; margin-top: 2px; padding: 2px; background: #f0f0f0; border-radius: 2px;">
+              <% task.tags.each do |tag| %>
+                <span class="tag-dot" style="display: inline-block; width: 6px; height: 6px; background: <%= tag.color %>; border-radius: 50%;" title="<%= tag.name %>"></span>
+              <% end %>
+              <%= link_to task.title.truncate(10), calendar_day_path(date: date) %>
+            </div>
+          <% end %>
+          <% if @calendar_data[date].size > 2 %>
+            <div style="font-size: 10px; color: #666;">+<%= @calendar_data[date].size - 2 %></div>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%# Empty cells after last day of month (week starts on Monday) %>
+    <% remaining = (7 - (@end_date.wday - 1) % 7) % 7 %>
+    <% remaining.times do %>
+      <div style="background: white; min-height: 80px;"></div>
+    <% end %>
+  </div>
+<% end %>

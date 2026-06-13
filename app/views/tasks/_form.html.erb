@@ -1,0 +1,225 @@
+<%= form_with(model: task) do |f| %>
+  <% if task.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(task.errors.count, "ошибка") %> при сохранении задачи:</h2>
+      <ul>
+        <% task.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%= f.label :title, "Название" %>
+    <%= f.text_field :title %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :description, "Описание" %>
+    <%= f.text_area :description %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :due_date, "Дата выполнения" %>
+    <%= f.datetime_local_field :due_date %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :status, "Статус" %>
+    <%= f.select :status, Task::STATUS_LABELS.map { |k, v| [v, k] }, selected: task.status %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :task_type, "Тип задачи" %>
+    <%= f.select :task_type, Task::TASK_TYPE_LABELS.map { |k, v| [v, k] }, selected: task.task_type %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :periodicity_type, "Тип периодичности" %>
+    <%= f.select :periodicity_type, Task::PERIODICITY_TYPE_LABELS.map { |k, v| [v, k] }, { include_blank: 'Без периодичности', selected: task.periodicity_type } %>
+  </div>
+
+  <div id="periodicity-config">
+    <div class="form-group" id="interval-group" style="display: none;">
+      <label>Интервал (дней)</label>
+      <%= number_field_tag 'task[periodicity_config][interval]', task.periodicity_config&.dig('interval') || 1, min: 1 %>
+    </div>
+
+    <div class="form-group" id="even-odd-group" style="display: none;">
+      <label>Тип дней</label>
+      <%= select_tag 'task[periodicity_config][even_odd]', options_for_select([['Чётные дни', 'even'], ['Нечётные дни', 'odd']], task.periodicity_config&.dig('even_odd')), include_blank: 'Выберите' %>
+    </div>
+
+    <div class="form-group" id="dates-group" style="display: none;">
+      <label>Конкретные даты (через запятую, ДД.ММ.ГГГГ)</label>
+      <%= text_field_tag 'task[periodicity_config][dates_input]', task.periodicity_config&.dig('dates')&.join(', '), placeholder: '01.01.2026, 15.06.2026, 31.12.2026' %>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>Теги</label>
+    <div class="tag-dropdown" id="tag-dropdown">
+      <div class="tag-dropdown-toggle" id="tag-dropdown-toggle">
+        <span id="tag-selected-text">Выберите теги...</span>
+        <span class="arrow">&#9662;</span>
+      </div>
+      <div class="tag-dropdown-menu" id="tag-dropdown-menu">
+        <% selected_tag_ids = task.tag_ids.map(&:to_s) %>
+        <% Tag.for_user(current_user).each do |tag| %>
+          <label class="tag-dropdown-item">
+            <input type="checkbox" name="task[tag_ids][]" value="<%= tag.id %>"
+              <%= 'checked' if selected_tag_ids.include?(tag.id.to_s) %>
+              onchange="updateTagText()">
+            <span class="tag-dot" style="background: <%= tag.color %>;"></span>
+            <%= tag.name %>
+            <% if tag.required? %>
+              <span class="tag-required">(обяз.)</span>
+            <% end %>
+          </label>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <%= f.submit class: 'btn' %>
+  </div>
+<% end %>
+
+<style>
+  .tag-dropdown {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+  }
+  .tag-dropdown-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    min-height: 38px;
+  }
+  .tag-dropdown-toggle:hover {
+    border-color: #aaa;
+  }
+  .tag-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 100;
+  }
+  .tag-dropdown-menu.open {
+    display: block;
+  }
+  .tag-dropdown-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    gap: 8px;
+  }
+  .tag-dropdown-item:hover {
+    background: #f0f0f0;
+  }
+  .tag-dropdown-item input[type="checkbox"] {
+    margin: 0;
+  }
+  .tag-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .tag-required {
+    color: #999;
+    font-size: 11px;
+    margin-left: auto;
+  }
+</style>
+
+<script>
+  function initTaskForm() {
+    const taskTypeSelect = document.querySelector('[name="task[task_type]"]');
+    const periodicitySelect = document.querySelector('[name="task[periodicity_type]"]');
+    const periodicityConfig = document.getElementById('periodicity-config');
+    const intervalGroup = document.getElementById('interval-group');
+    const evenOddGroup = document.getElementById('even-odd-group');
+    const datesGroup = document.getElementById('dates-group');
+
+    if (!taskTypeSelect) return;
+
+    function togglePeriodicityFields() {
+      const isPeriodic = taskTypeSelect.value === 'periodic';
+      periodicityConfig.style.display = isPeriodic ? 'block' : 'none';
+
+      if (isPeriodic) {
+        const type = periodicitySelect.value;
+        intervalGroup.style.display = (type === 'daily' || type === 'monthly') ? 'block' : 'none';
+        evenOddGroup.style.display = type === 'even_odd' ? 'block' : 'none';
+        datesGroup.style.display = type === 'specific_dates' ? 'block' : 'none';
+      } else {
+        intervalGroup.style.display = 'none';
+        evenOddGroup.style.display = 'none';
+        datesGroup.style.display = 'none';
+      }
+    }
+
+    taskTypeSelect.addEventListener('change', togglePeriodicityFields);
+    periodicitySelect.addEventListener('change', togglePeriodicityFields);
+    togglePeriodicityFields();
+
+    var toggle = document.getElementById('tag-dropdown-toggle');
+    var menu = document.getElementById('tag-dropdown-menu');
+    if (toggle && menu) {
+      toggle.addEventListener('click', function(e) {
+        e.stopPropagation();
+        menu.classList.toggle('open');
+      });
+
+      document.addEventListener('click', function(e) {
+        if (!menu.contains(e.target) && e.target !== toggle) {
+          menu.classList.remove('open');
+        }
+      });
+
+      menu.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+    }
+
+    updateTagText();
+  }
+
+  document.addEventListener('DOMContentLoaded', initTaskForm);
+  document.addEventListener('turbo:load', initTaskForm);
+
+  function updateTagText() {
+    var checkboxes = document.querySelectorAll('#tag-dropdown-menu input[type="checkbox"]');
+    var selected = [];
+    checkboxes.forEach(function(cb) {
+      if (cb.checked) {
+        var label = cb.closest('label');
+        var name = label.querySelector('.tag-dot').nextSibling.textContent.trim();
+        selected.push(name);
+      }
+    });
+    var text = document.getElementById('tag-selected-text');
+    if (text) {
+      text.textContent = selected.length > 0 ? selected.join(', ') : 'Выберите теги...';
+    }
+  }
+</script>

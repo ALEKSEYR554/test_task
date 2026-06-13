@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "Трекер задач" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Трекер задач">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
+    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%# Includes all stylesheet files in app/assets/stylesheets %>
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+    
+    <style>
+      body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+      .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+      nav { background: #333; color: white; padding: 10px 20px; }
+      nav a { color: white; text-decoration: none; margin-right: 15px; }
+      nav a:hover { text-decoration: underline; }
+      .flash { padding: 10px; margin-bottom: 20px; border-radius: 4px; }
+      .flash.notice { background: #d4edda; color: #155724; }
+      .flash.alert { background: #f8d7da; color: #721c24; }
+      .btn { display: inline-block; padding: 8px 16px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; border: none; cursor: pointer; }
+      .btn:hover { background: #0056b3; }
+      .btn-danger { background: #dc3545; }
+      .btn-danger:hover { background: #c82333; }
+      table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+      th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+      th { background: #f2f2f2; }
+      .form-group { margin-bottom: 15px; }
+      .form-group label { display: block; margin-bottom: 5px; }
+      .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+    </style>
+  </head>
+
+  <body>
+    <nav>
+      <%= link_to "Календарь", calendar_path %>
+      <%= link_to "Задачи", tasks_path %>
+      <%= link_to "Теги", tags_path %>
+      <% if logged_in? && current_user.admin? %>
+        <%= link_to "Пользователи", admin_users_path %>
+      <% end %>
+      <span style="float: right;">
+        <% if logged_in? %>
+          <%= current_user.name %> | <%= link_to "Выйти", logout_path, data: { turbo_method: :delete } %>
+        <% else %>
+          <%= link_to "Войти", login_path %>
+        <% end %>
+      </span>
+    </nav>
+    
+    <div class="container">
+      <% if notice %>
+        <div class="flash notice"><%= notice %></div>
+      <% end %>
+      <% if alert %>
+        <div class="flash alert"><%= alert %></div>
+      <% end %>
+      
+      <%= yield %>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,6 @@
+<h1>Редактирование пользователя</h1>
+
+<%= render 'form', user: @user %>
+
+<%= link_to 'Просмотр', admin_user_path(@user) %> |
+<%= link_to 'Назад', admin_users_path %>

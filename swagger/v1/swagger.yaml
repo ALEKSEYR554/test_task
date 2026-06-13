@@ -1,0 +1,337 @@
+openapi: 3.0.1
+info:
+  title: Task Tracker API
+  version: v1
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/auth/token:
+    post:
+      summary: Получить токен авторизации
+      tags:
+        - Авторизация
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  example: admin@example.com
+                password:
+                  type: string
+                  example: password123
+      responses:
+        '200':
+          description: Токен получен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  auth_token:
+                    type: string
+                  name:
+                    type: string
+                  role:
+                    type: string
+        '401':
+          description: Неверные учётные данные
+  /api/v1/tasks:
+    get:
+      summary: Список задач
+      tags:
+        - Задачи
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [new, in_progress, completed, cancelled]
+      responses:
+        '200':
+          description: Список задач
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+    post:
+      summary: Создать задачу
+      tags:
+        - Задачи
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskInput'
+      responses:
+        '201':
+          description: Задача создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '422':
+          description: Ошибка валидации
+  /api/v1/tasks/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Получить задачу
+      tags:
+        - Задачи
+      responses:
+        '200':
+          description: Задача
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Задача не найдена
+    put:
+      summary: Обновить задачу
+      tags:
+        - Задачи
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskInput'
+      responses:
+        '200':
+          description: Задача обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '422':
+          description: Ошибка валидации
+    delete:
+      summary: Удалить задачу
+      tags:
+        - Задачи
+      responses:
+        '204':
+          description: Задача удалена
+        '404':
+          description: Задача не найдена
+  /api/v1/tags:
+    get:
+      summary: Список тегов
+      tags:
+        - Теги
+      responses:
+        '200':
+          description: Список тегов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+    post:
+      summary: Создать тег
+      tags:
+        - Теги
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagInput'
+      responses:
+        '201':
+          description: Тег создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '422':
+          description: Ошибка валидации
+  /api/v1/tags/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Получить тег
+      tags:
+        - Теги
+      responses:
+        '200':
+          description: Тег
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '404':
+          description: Тег не найден
+    put:
+      summary: Обновить тег
+      tags:
+        - Теги
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagInput'
+      responses:
+        '200':
+          description: Тег обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '403':
+          description: Нельзя редактировать обязательный тег
+        '422':
+          description: Ошибка валидации
+    delete:
+      summary: Удалить тег
+      tags:
+        - Теги
+      responses:
+        '204':
+          description: Тег удалён
+        '403':
+          description: Нельзя удалить обязательный тег
+        '404':
+          description: Тег не найден
+components:
+  schemas:
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        due_date:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [new, in_progress, completed, cancelled]
+        task_type:
+          type: string
+          enum: [one_time, periodic]
+        periodicity_type:
+          type: string
+          enum: [daily, monthly, specific_dates, even_odd]
+          nullable: true
+        periodicity_config:
+          type: object
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+    TaskInput:
+      type: object
+      required:
+        - title
+        - due_date
+        - status
+        - task_type
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        due_date:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [new, in_progress, completed, cancelled]
+        task_type:
+          type: string
+          enum: [one_time, periodic]
+        periodicity_type:
+          type: string
+          enum: [daily, monthly, specific_dates, even_odd]
+        periodicity_config:
+          type: object
+          properties:
+            interval:
+              type: integer
+            even_odd:
+              type: string
+              enum: [even, odd]
+            dates:
+              type: array
+              items:
+                type: string
+        tag_ids:
+          type: array
+          items:
+            type: integer
+    Tag:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        color:
+          type: string
+        is_required:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    TagInput:
+      type: object
+      required:
+        - name
+        - color
+      properties:
+        name:
+          type: string
+        color:
+          type: string
+  securitySchemes:
+    bearerAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: "Сначала вызовите POST /api/v1/auth/token чтобы получить токен. Затем нажмите 'Authorize' и введите: Bearer <ваш_токен>"

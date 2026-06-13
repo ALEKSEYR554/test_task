@@ -1,0 +1,110 @@
+<h1>Редактирование вхождения: <%= @original_task.title %></h1>
+<p style="color: #666;">Дата: <%= @date.strftime('%d.%m.%Y') %></p>
+
+<%= form_with(model: @task, url: update_periodic_occurrence_path(task_id: @original_task.id, date: @date), method: :patch) do |f| %>
+  <% if @task.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@task.errors.count, "ошибка") %> при сохранении:</h2>
+      <ul>
+        <% @task.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%= f.label :title, "Название" %>
+    <%= f.text_field :title %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :description, "Описание" %>
+    <%= f.text_area :description %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :status, "Статус" %>
+    <%= f.select :status, Task::STATUS_LABELS.map { |k, v| [v, k] } %>
+  </div>
+
+  <div class="form-group">
+    <label>Теги</label>
+    <div class="tag-dropdown" id="tag-dropdown">
+      <div class="tag-dropdown-toggle" id="tag-dropdown-toggle">
+        <span id="tag-selected-text">Выберите теги...</span>
+        <span class="arrow">&#9662;</span>
+      </div>
+      <div class="tag-dropdown-menu" id="tag-dropdown-menu">
+        <% selected_tag_ids = @task.tag_ids.map(&:to_s) %>
+        <% Tag.for_user(current_user).each do |tag| %>
+          <label class="tag-dropdown-item">
+            <input type="checkbox" name="task[tag_ids][]" value="<%= tag.id %>"
+              <%= 'checked' if selected_tag_ids.include?(tag.id.to_s) %>
+              onchange="updateTagText()">
+            <span class="tag-dot" style="background: <%= tag.color %>;"></span>
+            <%= tag.name %>
+          </label>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div style="background: #fff3cd; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+    Будет создана отдельная разовая задача на <strong><%= @date.strftime('%d.%m.%Y') %></strong>.
+    Периодическая задача на этот день будет отменена.
+  </div>
+
+  <div class="actions">
+    <%= f.submit 'Сохранить', class: 'btn' %>
+    <%= link_to 'Отмена', calendar_day_path(date: @date), class: 'btn', style: 'background: #6c757d;' %>
+  </div>
+<% end %>
+
+<style>
+  .tag-dropdown { position: relative; width: 100%; max-width: 400px; }
+  .tag-dropdown-toggle { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; background: white; cursor: pointer; min-height: 38px; }
+  .tag-dropdown-toggle:hover { border-color: #aaa; }
+  .tag-dropdown-menu { display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-top: none; border-radius: 0 0 4px 4px; max-height: 200px; overflow-y: auto; z-index: 100; }
+  .tag-dropdown-menu.open { display: block; }
+  .tag-dropdown-item { display: flex; align-items: center; padding: 8px 12px; cursor: pointer; gap: 8px; }
+  .tag-dropdown-item:hover { background: #f0f0f0; }
+  .tag-dropdown-item input[type="checkbox"] { margin: 0; }
+  .tag-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+</style>
+
+<script>
+  function initOccurrenceForm() {
+    var toggle = document.getElementById('tag-dropdown-toggle');
+    var menu = document.getElementById('tag-dropdown-menu');
+    if (!toggle || !menu) return;
+
+    toggle.addEventListener('click', function(e) {
+      e.stopPropagation();
+      menu.classList.toggle('open');
+    });
+    document.addEventListener('click', function(e) {
+      if (!menu.contains(e.target) && e.target !== toggle) {
+        menu.classList.remove('open');
+      }
+    });
+    menu.addEventListener('click', function(e) { e.stopPropagation(); });
+    updateTagText();
+  }
+  document.addEventListener('DOMContentLoaded', initOccurrenceForm);
+  document.addEventListener('turbo:load', initOccurrenceForm);
+
+  function updateTagText() {
+    var checkboxes = document.querySelectorAll('#tag-dropdown-menu input[type="checkbox"]');
+    var selected = [];
+    checkboxes.forEach(function(cb) {
+      if (cb.checked) {
+        var label = cb.closest('label');
+        var name = label.querySelector('.tag-dot').nextSibling.textContent.trim();
+        selected.push(name);
+      }
+    });
+    var text = document.getElementById('tag-selected-text');
+    if (text) text.textContent = selected.length > 0 ? selected.join(', ') : 'Выберите теги...';
+  }
+</script>

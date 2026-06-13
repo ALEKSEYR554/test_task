@@ -1,0 +1,23 @@
+<h1>Тег</h1>
+
+<p>
+  <strong>Название:</strong>
+  <%= @tag.name %>
+</p>
+
+<p>
+  <strong>Цвет:</strong>
+  <span style="background-color: <%= @tag.color %>; color: white; padding: 2px 6px; border-radius: 3px;">
+    <%= @tag.color %>
+  </span>
+</p>
+
+<p>
+  <strong>Обязательный:</strong>
+  <%= @tag.required? ? 'Да' : 'Нет' %>
+</p>
+
+<% unless @tag.required? %>
+  <%= link_to 'Редактировать', edit_tag_path(@tag) %> |
+<% end %>
+<%= link_to 'Назад', tags_path %>
